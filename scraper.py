@@ -24,7 +24,7 @@ def extract_next_links(url, resp):
 
     for link in soup.find_all('a'): #find all anchor tags in the response content
         foundLink = link.get('href')
-        linkWithNoFragment = re.sub(r'/#.+', '', str(foundLink))
+        linkWithNoFragment = re.sub(r'#.+', '', str(foundLink))
         links.append(linkWithNoFragment)
         
     return links
@@ -40,7 +40,7 @@ def is_valid(url):
         '.cs.uci.edu/',
         '.informatics.uci.edu/',
         '.stat.uci.edu/',
-        '.today.uci.edu/department/information_computer_sciences/'
+        'today.uci.edu/department/information_computer_sciences/'
     ]
 
     try:
@@ -54,7 +54,6 @@ def is_valid(url):
         if parsed.scheme not in set(["http", "https"]):
             return False
         
-      
         return found and not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
