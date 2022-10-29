@@ -3,8 +3,11 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
 def scraper(url, resp):
-    links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+    if 200 <= resp.status < 400:
+        links = extract_next_links(url, resp)
+        return [link for link in links if is_valid(link)]
+    else:
+        return []
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -16,7 +19,7 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    links = []
+    links = set()
     
     if not resp.raw_response:
         return links
@@ -25,15 +28,20 @@ def extract_next_links(url, resp):
     for link in soup.find_all('a'): #find all anchor tags in the response content
         foundLink = link.get('href')
         linkWithNoFragment = re.sub(r'#.+', '', str(foundLink))
-        links.append(linkWithNoFragment)
-        
-    return links
+        if is_valid(linkWithNoFragment):
+            links.add(linkWithNoFragment)
+    
+    linksList = list(links)
+    if linksList is None:
+        return []
+    return linksList
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     if not url: return False
+    if url is None: return False
 
     domains = [
         '.ics.uci.edu/',
