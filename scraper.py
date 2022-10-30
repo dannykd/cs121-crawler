@@ -19,7 +19,7 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    links = set()
+    links = []
     
     if not resp.raw_response:
         return links
@@ -28,21 +28,17 @@ def extract_next_links(url, resp):
     for link in soup.find_all('a'): #find all anchor tags in the response content
         foundLink = link.get('href')
         linkWithNoFragment = re.sub(r'#.+', '', str(foundLink))
-        if is_valid(linkWithNoFragment):
-            links.add(linkWithNoFragment)
+        links.append(linkWithNoFragment)
     
-    linksList = list(links)
-    if linksList is None:
-        return []
-    return linksList
+    
+    return links
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     if not url: return False
-    if url is None: return False
-
+   
     domains = [
         '.ics.uci.edu/',
         '.cs.uci.edu/',
