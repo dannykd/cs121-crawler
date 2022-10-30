@@ -19,19 +19,19 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    links = []
+    links = set()
     
     if not resp.raw_response:
-        return links
+        return list(links)
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
     for link in soup.find_all('a'): #find all anchor tags in the response content
         foundLink = link.get('href')
         linkWithNoFragment = re.sub(r'#.+', '', str(foundLink))
-        links.append(linkWithNoFragment)
+        links.add(linkWithNoFragment)
     
     
-    return links
+    return list(links)
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
