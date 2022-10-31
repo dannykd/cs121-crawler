@@ -11,6 +11,7 @@ def printReport():
     print('')
     print('~~~~~~~~~~~~~~~~~~~REPORT~~~~~~~~~~~~~~~~~~~')
     print(f'Number of Unique Pages: {len(data.uniqueLinks)}')
+    print(f'Number of Unique Crawled Pages: {len(data.crawledUniqueLinks)}')
     print('')
     print(f'Longest Page Found: {data.longestPageFound[0]} with {data.longestPageFound[1]} tokens.')
 
@@ -29,11 +30,6 @@ def printReport():
     for k, v in data.subDomains.items():
         print(f'    {k}, {len(v)}')
 
-    
-
-    
-
-
 
 class Worker(Thread):
     def __init__(self, worker_id, config, frontier):
@@ -46,10 +42,11 @@ class Worker(Thread):
         
     def run(self):
 
-    
+        run = 0
         while True:
+            run += 1
             tbd_url = self.frontier.get_tbd_url()
-            if not tbd_url:
+            if not tbd_url or run == 100:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 printReport()
                 break

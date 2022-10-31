@@ -7,22 +7,20 @@ import data
 # ASSUMPTIONS:
 # We will crawl any pages with more than 300 tokens of text. 
 # Text will only be considered if it is inside of a <p> tag or any <h> tag.
-# The number of unique pages is the number of unique pages we decide to crawl.
-
 
 
 def scraper(url, resp):
     
     if 200 <= resp.status < 400:
         pageTokens = extractTokens(resp)
+        # 1) For finding unique pages
+        data.uniqueLinks.add(url)
         if len(pageTokens) < 200:
             #if there's less than 300 tokens of text
             return []
-
+        data.crawledUniqueLinks.add(url)
         links = extract_next_links(url, resp)
-        # 1) For finding unique pages
-        data.uniqueLinks.add(url)
-        
+
         # 2) For finding the longest page in terms of number of words
         if len(pageTokens) > data.longestPageFound[1]:
             data.longestPageFound[0] = url
@@ -70,7 +68,6 @@ def extract_next_links(url, resp):
         foundLink = urldefrag(foundLink)[0]
         if is_valid(foundLink):
             if not is_crawler_trap(url, urlparse(foundLink)): 
-                #linkWithNoFragment = re.sub(r'#.+', '', str(foundLink))
                 links.add(foundLink)     
         
         
@@ -100,16 +97,14 @@ def is_valid(url):
         
         if parsed.scheme not in set(["http", "https"]):
             return False
-        
-        m = re.match(r'.*(.pdf)+',parsed.path.lower())
+            
+        m = re.match(r'.(.pdf)+',parsed.path.lower())
         if m:
             return False
-        m = re.match(r'.*(.ppsx)+',parsed.path.lower())
+        m = re.match(r'.(.ppsx)+',parsed.path.lower())
         if m:
             return False
 
-
-        
         return found and not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico|png|tiff?|mid|mp2|mp3|mp4|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1|thmx|mso|arff|rtf|jar|csv|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
@@ -124,27 +119,30 @@ def extractTokens(resp):
         return []
     textContent = ""
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-    for pTag in soup.find_all('p'):
-        textContent += " " + pTag.getText()
+    for bodyTag in soup.find_all('body'):
+        textContent += " " + bodyTag.getText()
 
-    for h1Tag in soup.find_all('h1'):
-        textContent += " " + h1Tag.getText()
+    # for h1Tag in soup.find_all('h1'):
+    #     textContent += " " + h1Tag.getText()
     
-    for h2Tag in soup.find_all('h2'):
-        textContent += " " + h2Tag.getText()
+    # for h2Tag in soup.find_all('h2'):
+    #     textContent += " " + h2Tag.getText()
     
-    for h3Tag in soup.find_all('h3'):
-        textContent += " " + h3Tag.getText()
+    # for h3Tag in soup.find_all('h3'):
+    #     textContent += " " + h3Tag.getText()
 
-    for h4Tag in soup.find_all('h4'):
-        textContent += " " + h4Tag.getText()
+    # for h4Tag in soup.find_all('h4'):
+    #     textContent += " " + h4Tag.getText()
 
-    for h5Tag in soup.find_all('h5'):
-        textContent += " " + h5Tag.getText()
+    # for h5Tag in soup.find_all('h5'):
+    #     textContent += " " + h5Tag.getText()
 
-    for h6Tag in soup.find_all('h6'):
-        textContent += " " + h6Tag.getText()
+    # for h6Tag in soup.find_all('h6'):
+    #     textContent += " " + h6Tag.getText()
 
+    # for divTag in soup.find_all('div'):
+    #     textContent += " " + divTag.getText()
+        
     return tokenize(textContent)
 
 

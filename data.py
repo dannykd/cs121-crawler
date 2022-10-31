@@ -1,4 +1,5 @@
 uniqueLinks = set()
+crawledUniqueLinks = set()
 subDomains = dict() # of ics.uci.edu
 tokenCount = dict()
 longestPageFound = ["init", 0]
