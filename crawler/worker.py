@@ -5,6 +5,34 @@ from utils.download import download
 from utils import get_logger
 import scraper
 import time
+import data
+
+def printReport():
+    print('')
+    print('~~~~~~~~~~~~~~~~~~~REPORT~~~~~~~~~~~~~~~~~~~')
+    print(f'Number of Unique Pages: {len(data.uniqueLinks)}')
+    print('')
+    print(f'Longest Page Found: {data.longestPageFound[0]} with {data.longestPageFound[1]} tokens.')
+
+    sortedTokenCount = sorted(data.tokenCount.items(), key=lambda x: x[1], reverse=True)
+    print('')
+    print('Most common 50 tokens:')
+    numOfTokens = 0
+    for k, v in sortedTokenCount:
+        if numOfTokens > 50:
+            break
+        print('    {} -> {}'.format(k,v))
+        numOfTokens+=1
+    
+    print('')
+    print('Subdomains in ics.uci.edu:')
+    for k, v in data.subDomains.items():
+        print(f'    {k}, {len(v)}')
+
+    
+
+    
+
 
 
 class Worker(Thread):
@@ -17,10 +45,14 @@ class Worker(Thread):
         super().__init__(daemon=True)
         
     def run(self):
+
+        runs = 0
         while True:
+            runs+=1
             tbd_url = self.frontier.get_tbd_url()
-            if not tbd_url:
+            if not tbd_url or runs == 500:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
+                printReport()
                 break
             resp = download(tbd_url, self.config, self.logger)
             self.logger.info(
@@ -31,3 +63,4 @@ class Worker(Thread):
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)
+

@@ -1,10 +1,50 @@
 import re
-from urllib.parse import urlparse
+from urllib import response
+from urllib.parse import urlparse, urldefrag
 from bs4 import BeautifulSoup
+import data
+
+# ASSUMPTIONS:
+# We will crawl any pages with more than 300 tokens of text. 
+# Text will only be considered if it is inside of a <p> tag or any <h> tag.
+# The number of unique pages is the number of unique pages we decide to crawl.
+
+
 
 def scraper(url, resp):
+    
     if 200 <= resp.status < 400:
+        pageTokens = extractTokens(resp)
+        if len(pageTokens) < 200:
+            #if there's less than 300 tokens of text
+            return []
+
         links = extract_next_links(url, resp)
+        # 1) For finding unique pages
+        data.uniqueLinks.add(url)
+        
+        # 2) For finding the longest page in terms of number of words
+        if len(pageTokens) > data.longestPageFound[1]:
+            data.longestPageFound[0] = url
+            data.longestPageFound[1] = len(pageTokens)
+        
+        # 3) For finding the count of token occurences
+        for token in pageTokens:
+            token = token.lower()
+            if token in data.tokenCount.keys() and token not in data.stopWords:
+                data.tokenCount[token] +=1
+            elif token not in data.tokenCount.keys() and token not in data.stopWords:
+                data.tokenCount[token] = 1
+        
+        # 4) For finding sub domains in ics.uci.edu, count of unique pages for the subdomain will only increment if there is a path
+        parsed = urlparse(url)
+        if '.ics.uci.edu' in parsed.hostname:
+            if parsed.hostname in data.subDomains.keys():
+                data.subDomains[parsed.hostname].add(url)
+            else:
+                data.subDomains[parsed.netloc] = set()
+       
+       
         return [link for link in links if is_valid(link)]
     else:
         return []
@@ -27,10 +67,13 @@ def extract_next_links(url, resp):
 
     for link in soup.find_all('a'): #find all anchor tags in the response content
         foundLink = link.get('href')
-        linkWithNoFragment = re.sub(r'#.+', '', str(foundLink))
-        links.add(linkWithNoFragment)
-    
-    
+        foundLink = urldefrag(foundLink)[0]
+        if is_valid(foundLink):
+            if not is_crawler_trap(url, urlparse(foundLink)): 
+                #linkWithNoFragment = re.sub(r'#.+', '', str(foundLink))
+                links.add(foundLink)     
+        
+        
     return list(links)
 
 def is_valid(url):
@@ -61,7 +104,12 @@ def is_valid(url):
         m = re.match(r'.*(.pdf)+',parsed.path.lower())
         if m:
             return False
+        m = re.match(r'.*(.ppsx)+',parsed.path.lower())
+        if m:
+            return False
 
+
+        
         return found and not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -76,3 +124,58 @@ def is_valid(url):
         print ("TypeError for ", url)
         print ("TypeError for ", parsed)
         raise
+
+def extractTokens(resp):
+
+    if not resp.raw_response.content:
+        return []
+    textContent = ""
+    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    for pTag in soup.find_all('p'):
+        textContent += " " + pTag.getText()
+
+    for h1Tag in soup.find_all('h1'):
+        textContent += " " + h1Tag.getText()
+    
+    for h2Tag in soup.find_all('h2'):
+        textContent += " " + h2Tag.getText()
+    
+    for h3Tag in soup.find_all('h3'):
+        textContent += " " + h3Tag.getText()
+
+    for h4Tag in soup.find_all('h4'):
+        textContent += " " + h4Tag.getText()
+
+    for h5Tag in soup.find_all('h5'):
+        textContent += " " + h5Tag.getText()
+
+    for h6Tag in soup.find_all('h6'):
+        textContent += " " + h6Tag.getText()
+
+    return tokenize(textContent)
+
+
+def tokenize(text: str) -> list:
+
+    return re.findall('[a-zA-Z0-9]+', text)
+
+def is_crawler_trap(url, parsedUrl) -> bool:
+    """
+        If it's a crawler trap, return True
+        else return False
+    """
+    crawler_trap_domains = ["login.php"]
+    # long length urls
+   
+    if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", parsedUrl.path): #if there's a repeating directory
+        return True
+    elif re.match(r"^.*calendar.*$", parsedUrl.path.lower()):# calendar pages
+        return True
+    elif re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", parsedUrl.path.lower()): # extra directories
+        return True
+    else:
+        for domain in crawler_trap_domains: # it will check for certain text within the url, such as login.php which is not valuable in terms of crawling
+            if domain.lower() in parsedUrl.path.lower():
+                return True
+        
+        return False
