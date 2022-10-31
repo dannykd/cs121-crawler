@@ -69,6 +69,7 @@ def extract_next_links(url, resp):
     for link in soup.find_all('a'): #find all anchor tags in the response content
         foundLink = link.get('href')
         foundLink = urldefrag(foundLink)[0]
+        foundLink = str(foundLink)
         if foundLink.startswith('/'):
             foundLink = url + foundLink
         if is_valid(foundLink):
