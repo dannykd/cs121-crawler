@@ -14,7 +14,7 @@ def scraper(url, resp):
     
     if 200 <= resp.status < 400:
         pageTokens = extractTokens(resp)
-        pageSimHash = Simhash(''.join(pageTokens)).value
+        pageSimHash = Simhash(' '.join(pageTokens)).value
         # 1) For finding unique pages
         data.uniqueLinks.add(url)
         if len(pageTokens) < 200 or pageSimHash in data.hashes:
