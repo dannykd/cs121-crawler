@@ -3,6 +3,7 @@ from urllib import response
 from urllib.parse import urlparse, urldefrag
 from bs4 import BeautifulSoup
 import data
+from simhash import Simhash
 
 # ASSUMPTIONS:
 # We will crawl any pages with more than 300 tokens of text. 
@@ -13,11 +14,13 @@ def scraper(url, resp):
     
     if 200 <= resp.status < 400:
         pageTokens = extractTokens(resp)
+        pageSimHash = Simhash(''.join(pageTokens)).value
         # 1) For finding unique pages
         data.uniqueLinks.add(url)
-        if len(pageTokens) < 200:
-            #if there's less than 300 tokens of text
+        if len(pageTokens) < 200 or pageSimHash not in data.hashes:
+            #if there's less than 200 tokens of text or there is a similar page already crawled don't crawl it
             return []
+        data.hashes.add(pageSimHash)
         data.crawledUniqueLinks.add(url)
         links = extract_next_links(url, resp)
 
@@ -66,6 +69,8 @@ def extract_next_links(url, resp):
     for link in soup.find_all('a'): #find all anchor tags in the response content
         foundLink = link.get('href')
         foundLink = urldefrag(foundLink)[0]
+        if foundLink.startswith('/'):
+            foundLink = url + foundLink
         if is_valid(foundLink):
             if not is_crawler_trap(url, urlparse(foundLink)): 
                 links.add(foundLink)     
@@ -101,7 +106,7 @@ def is_valid(url):
         m = re.match(r'.(.pdf)+',parsed.path.lower())
         if m:
             return False
-        m = re.match(r'.(.ppsx)+',parsed.path.lower())
+        m = re.match(r'.*(.ppsx)+',parsed.path.lower())
         if m:
             return False
 
