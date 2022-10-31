@@ -21,7 +21,7 @@ def scraper(url, resp):
             #if there's less than 200 tokens of text or there is a similar page already crawled don't crawl it
             return []
         data.hashes.add(pageSimHash)
-        data.crawledUniqueLinks.add(url)
+        data.crawledUniqueLinks.add(url) # Finding unique pages that we did crawl
         links = extract_next_links(url, resp)
 
         # 2) For finding the longest page in terms of number of words
