@@ -14,7 +14,7 @@ def scraper(url, resp):
     
     if 200 <= resp.status < 400:
         pageTokens = extractTokens(resp)
-        pageSimHash = Simhash(' '.join(pageTokens)).value
+        pageSimHash = Simhash(''.join(pageTokens)).value
         # 1) For finding unique pages
         data.uniqueLinks.add(url)
         if len(pageTokens) < 200 or pageSimHash in data.hashes:
@@ -43,7 +43,7 @@ def scraper(url, resp):
             if parsed.hostname in data.subDomains.keys():
                 data.subDomains[parsed.hostname].add(url)
             else:
-                data.subDomains[parsed.netloc] = set()
+                data.subDomains[parsed.hostname] = set()
        
        
         return [link for link in links if is_valid(link)]
@@ -121,8 +121,9 @@ def is_valid(url):
 
 def extractTokens(resp):
 
-    if not resp.raw_response.content:
-        return []
+    if not resp.raw_response:
+        if not resp.raw_response.content:
+            return []
     textContent = ""
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
     for bodyTag in soup.find_all('body'):
@@ -148,7 +149,7 @@ def extractTokens(resp):
 
     # for divTag in soup.find_all('div'):
     #     textContent += " " + divTag.getText()
-        
+
     return tokenize(textContent)
 
 
@@ -156,20 +157,27 @@ def tokenize(text: str) -> list:
 
     return re.findall('[a-zA-Z0-9]+', text)
 
+# Obtained crawler trap tips from https://support.archive-it.org/hc/en-us/articles/208332943-Identify-and-avoid-crawler-traps-
+# Obtained regex for crawler traps from https://support.archive-it.org/hc/en-us/articles/208332963-How-to-modify-your-crawl-scope-with-a-Regular-Expression#Calendars 
 def is_crawler_trap(url, parsedUrl) -> bool:
     """
         If it's a crawler trap, return True
         else return False
     """
-    crawler_trap_domains = ["login.php"]
+    crawler_trap_domains = ["login.php", "//", "/attachment", "?attachment"]
     # long length urls
-   
-    if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", parsedUrl.path): #if there's a repeating directory
+    if len(str(url)) > 220: # url length is too long
+        return True
+    elif re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", parsedUrl.path): #if there's a repeating directory
         return True
     elif re.match(r"^.*calendar.*$", parsedUrl.path.lower()):# calendar pages
         return True
     elif re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", parsedUrl.path.lower()): # extra directories
         return True
+    elif "?" in str(url):
+        query = str(url).split("?")
+        if "/" in query[1]:
+            return True
     else:
         for domain in crawler_trap_domains: # it will check for certain text within the url, such as login.php which is not valuable in terms of crawling
             if domain.lower() in parsedUrl.path.lower():

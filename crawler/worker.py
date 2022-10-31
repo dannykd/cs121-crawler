@@ -20,7 +20,7 @@ def printReport():
     print('Most common 50 tokens:')
     numOfTokens = 0
     for k, v in sortedTokenCount:
-        if numOfTokens > 50:
+        if numOfTokens > 55:
             break
         print('    {} -> {}'.format(k,v))
         numOfTokens+=1
