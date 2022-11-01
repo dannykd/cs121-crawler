@@ -17,8 +17,8 @@ def scraper(url, resp):
         pageSimHash = Simhash(''.join(pageTokens)).value
         # 1) For finding unique pages
         data.uniqueLinks.add(url)
-        if len(pageTokens) < 200 or pageSimHash in data.hashes:
-            #if there's less than 200 tokens of text or there is a similar page already crawled don't crawl it
+        if len(pageTokens) < 300 or pageSimHash in data.hashes:
+            #if there's less than 300 tokens of text or there is a similar page already crawled don't crawl it
             return []
         data.hashes.add(pageSimHash)
         data.crawledUniqueLinks.add(url) # Finding unique pages that we did crawl
@@ -73,8 +73,7 @@ def extract_next_links(url, resp):
         if foundLink.startswith('/'):
             foundLink = url + foundLink
         if is_valid(foundLink):
-            if not is_crawler_trap(url, urlparse(foundLink)): 
-                links.add(foundLink)     
+            links.add(foundLink)     
         
         
     return list(links)
@@ -102,6 +101,9 @@ def is_valid(url):
                 break
         
         if parsed.scheme not in set(["http", "https"]):
+            return False
+        
+        if is_crawler_trap(url, parsed):
             return False
             
         m = re.match(r'.(.pdf)+',parsed.path.lower())
@@ -166,21 +168,25 @@ def is_crawler_trap(url, parsedUrl) -> bool:
     """
     crawler_trap_domains = ["login.php", "//", "/attachment", "?attachment"]
     # long length urls
-    if len(str(url)) > 220: # url length is too long
+    if len(str(url)) > 205: # url length is too long
         return True
-    elif re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", parsedUrl.path): #if there's a repeating directory
+    if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", parsedUrl.path): #if there's a repeating directory
         return True
-    elif re.match(r"^.*calendar.*$", parsedUrl.path.lower()):# calendar pages
+    if re.match(r"^.*calendar.*$", parsedUrl.path.lower()):# calendar pages
         return True
-    elif re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", parsedUrl.path.lower()): # extra directories
+    if re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", parsedUrl.path.lower()): # extra directories
         return True
-    elif "?" in str(url):
+    if "?" in str(url):
         query = str(url).split("?")
-        if "/" in query[1]:
+        if "/" in query[1] or len(query) > 2:
             return True
-    else:
-        for domain in crawler_trap_domains: # it will check for certain text within the url, such as login.php which is not valuable in terms of crawling
-            if domain.lower() in parsedUrl.path.lower():
-                return True
+    if str(url).count("//") > 1:
+        return True
+
+    
+  
+    for domain in crawler_trap_domains: # it will check for certain text within the url, such as login.php which is not valuable in terms of crawling
+        if domain.lower() in parsedUrl.path.lower():
+            return True
         
-        return False
+    return False
