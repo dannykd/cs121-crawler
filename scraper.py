@@ -180,6 +180,10 @@ def is_crawler_trap(url, parsedUrl) -> bool:
         query = str(url).split("?")
         if "/" in query[1] or len(query) > 2:
             return True
+    if ".php" in str(url):
+        query = str(url).split(".php")
+        if "/" in query[1]:
+            return True
     if str(url).count("//") > 1:
         return True
 
