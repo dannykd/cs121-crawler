@@ -166,7 +166,7 @@ def is_crawler_trap(url, parsedUrl) -> bool:
         If it's a crawler trap, return True
         else return False
     """
-    crawler_trap_domains = ["login.php", "//", "/attachment", "?attachment"]
+    crawler_trap_domains = ["login.php", "//", "/attachment", "?attachment", "?ical"]
     # long length urls
     if len(str(url)) > 205: # url length is too long
         return True
@@ -174,7 +174,7 @@ def is_crawler_trap(url, parsedUrl) -> bool:
         return True
     if re.match(r"^.*calendar.*$", parsedUrl.path.lower()):# calendar pages
         return True
-    if re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", parsedUrl.path.lower()): # extra directories
+    if re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme|/pdf).*$", parsedUrl.path.lower()): # extra directories
         return True
     if "?" in str(url):
         query = str(url).split("?")
