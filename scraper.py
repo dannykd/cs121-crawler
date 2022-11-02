@@ -17,10 +17,14 @@ def scraper(url, resp):
         pageSimHash = Simhash(' '.join(pageTokens)).value
         # 1) For finding unique pages
         data.uniqueLinks.add(url)
-        if len(pageTokens) < 300 or pageSimHash in data.hashes:
+        if len(pageTokens) < 300:
             #if there's less than 300 tokens of text or there is a similar page already crawled don't crawl it
             return []
-        data.hashes.add(pageSimHash)
+        
+        for hash in data.hashes[-10:]: #check if this page is similar with the 10 previously crawled pages
+            # todo: compare pageSimHash with hash, if it's similar, return an empty array[]
+            return []
+        data.hashes.append(pageSimHash)
         data.crawledUniqueLinks.add(url) # Finding unique pages that we did crawl
         links = extract_next_links(url, resp)
 
@@ -166,7 +170,7 @@ def is_crawler_trap(url, parsedUrl) -> bool:
         If it's a crawler trap, return True
         else return False
     """
-    crawler_trap_domains = ["login.php", "//", "/attachment", "?attachment"]
+    crawler_trap_domains = ["login.php", "//", "/attachment", "?attachment", "/IRUS"]
     # long length urls
     if len(str(url)) > 205: # url length is too long
         return True

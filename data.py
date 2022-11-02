@@ -3,7 +3,7 @@ crawledUniqueLinks = set()
 subDomains = dict() # of ics.uci.edu
 tokenCount = dict()
 longestPageFound = ["init", 0]
-hashes = set()
+hashes = [0,0,0,0,0,0,0,0,0,0,0,0]# initialized with 0s
 
 stopWords = {
     "a",
