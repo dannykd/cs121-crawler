@@ -170,7 +170,7 @@ def is_crawler_trap(url, parsedUrl) -> bool:
         If it's a crawler trap, return True
         else return False
     """
-    crawler_trap_domains = ["login.php", "//", "/attachment", "?attachment", "/IRUS"]
+    crawler_trap_domains = ["login.php", "//", "/attachment", "?attachment", "/irus"]
     # long length urls
     if len(str(url)) > 205: # url length is too long
         return True
