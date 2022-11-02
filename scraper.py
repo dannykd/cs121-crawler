@@ -9,22 +9,33 @@ from simhash import Simhash
 # We will crawl any pages with more than 300 tokens of text. 
 # Text will only be considered if it is inside of a <p> tag or any <h> tag.
 
+DISTANCE_TOLERANCE = 6
 
 def scraper(url, resp):
     
     if 200 <= resp.status < 400:
         pageTokens = extractTokens(resp)
-        pageSimHash = Simhash(' '.join(pageTokens)).value
+        pageSimHash = Simhash(' '.join(pageTokens))
         # 1) For finding unique pages
         data.uniqueLinks.add(url)
         if len(pageTokens) < 300:
             #if there's less than 300 tokens of text or there is a similar page already crawled don't crawl it
             return []
         
-        for hash in data.hashes[-10:]: #check if this page is similar with the 10 previously crawled pages
-            # todo: compare pageSimHash with hash, if it's similar, return an empty array[]
-            return []
-        data.hashes.append(pageSimHash)
+        if len(data.hashes) <= 10:
+            data.hashes.append(pageSimHash)
+        else:
+            valid = True
+            for hash in data.hashes[-10:]: #check if this page is similar with the 10 previously crawled pages
+                distanceNum = hash.distance(pageSimHash) # calculate the hash distance
+                if distanceNum < DISTANCE_TOLERANCE: # check to see if the page given is similar with our previousHashes, if it is, it is NOT valid, otherwise it's valid
+                    valid = False
+                    break
+            if flag:
+                data.hashes.append(pageSimHash)
+            else:
+                return []
+        
         data.crawledUniqueLinks.add(url) # Finding unique pages that we did crawl
         links = extract_next_links(url, resp)
 
@@ -134,28 +145,7 @@ def extractTokens(resp):
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
     for bodyTag in soup.find_all('body'):
         textContent += " " + bodyTag.getText()
-
-    # for h1Tag in soup.find_all('h1'):
-    #     textContent += " " + h1Tag.getText()
-    
-    # for h2Tag in soup.find_all('h2'):
-    #     textContent += " " + h2Tag.getText()
-    
-    # for h3Tag in soup.find_all('h3'):
-    #     textContent += " " + h3Tag.getText()
-
-    # for h4Tag in soup.find_all('h4'):
-    #     textContent += " " + h4Tag.getText()
-
-    # for h5Tag in soup.find_all('h5'):
-    #     textContent += " " + h5Tag.getText()
-
-    # for h6Tag in soup.find_all('h6'):
-    #     textContent += " " + h6Tag.getText()
-
-    # for divTag in soup.find_all('div'):
-    #     textContent += " " + divTag.getText()
-
+        
     return tokenize(textContent)
 
 
