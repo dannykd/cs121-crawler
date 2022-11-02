@@ -11,6 +11,13 @@ from simhash import Simhash
 
 DISTANCE_TOLERANCE = 6
 
+def valid_distancce(currentPageSimhash, SimhashList):
+    for hash in SimhashList: #check if this page is similar with the 10 previously crawled pages
+        distanceNum = hash.distance(pageSimHash) # calculate the hash distance
+        if distanceNum < DISTANCE_TOLERANCE: # check to see if the page given is similar with our previousHashes, if it is, it is NOT valid, otherwise it's valid
+            return False
+    return True
+    
 def scraper(url, resp):
     
     if 200 <= resp.status < 400:
@@ -23,18 +30,27 @@ def scraper(url, resp):
             return []
         
         if len(data.hashes) <= 10:
-            data.hashes.append(pageSimHash)
-        else:
-            valid = True
-            for hash in data.hashes[-10:]: #check if this page is similar with the 10 previously crawled pages
-                distanceNum = hash.distance(pageSimHash) # calculate the hash distance
-                if distanceNum < DISTANCE_TOLERANCE: # check to see if the page given is similar with our previousHashes, if it is, it is NOT valid, otherwise it's valid
-                    valid = False
-                    break
+            valid = valid_distancce(pageSimHash, data.hashes)
             if valid:
                 data.hashes.append(pageSimHash)
             else:
                 return []
+        else:
+            valid = valid_distancce(pageSimHash, data.hashes[-10:])
+            if valid:
+                data.hashes.append(pageSimHash)
+            else:
+                return []
+            # valid = True
+            # for hash in data.hashes[-10:]: #check if this page is similar with the 10 previously crawled pages
+            #     distanceNum = hash.distance(pageSimHash) # calculate the hash distance
+            #     if distanceNum < DISTANCE_TOLERANCE: # check to see if the page given is similar with our previousHashes, if it is, it is NOT valid, otherwise it's valid
+            #         valid = False
+            #         break
+            # if valid:
+            #     data.hashes.append(pageSimHash)
+            # else:
+            #     return []
         
         data.crawledUniqueLinks.add(url) # Finding unique pages that we did crawl
         links = extract_next_links(url, resp)
