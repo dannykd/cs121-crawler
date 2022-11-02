@@ -14,7 +14,7 @@ def scraper(url, resp):
     
     if 200 <= resp.status < 400:
         pageTokens = extractTokens(resp)
-        pageSimHash = Simhash(''.join(pageTokens)).value
+        pageSimHash = Simhash(' '.join(pageTokens)).value
         # 1) For finding unique pages
         data.uniqueLinks.add(url)
         if len(pageTokens) < 300 or pageSimHash in data.hashes:
@@ -114,7 +114,7 @@ def is_valid(url):
             return False
 
         return found and not re.match(
-            r".*\.(css|js|bmp|gif|jpe?g|ico|ppsx|png|tiff?|mid|mp2|mp3|mp4|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1|thmx|mso|arff|rtf|jar|csv|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            r".*\.(css|js|bib|bmp|gif|jpe?g|ico|ppsx|png|tiff?|mid|mp2|mp3|mp4|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1|thmx|mso|arff|rtf|jar|csv|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", url)
@@ -166,29 +166,31 @@ def is_crawler_trap(url, parsedUrl) -> bool:
         If it's a crawler trap, return True
         else return False
     """
-    crawler_trap_domains = ["login.php", "//", "/attachment", "?attachment", "?ical"]
+    crawler_trap_domains = ["login.php", "//", "/attachment", "?attachment"]
     # long length urls
     if len(str(url)) > 205: # url length is too long
         return True
-    if re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", parsedUrl.path): #if there's a repeating directory
+    if re.match(r".*/(.+?)/\1$|.*/(.+?)/\2/.*$|.*/(.+?)/.*/\3$|.*/(.+?)/.*\4/.*$", parsedUrl.path): #if there's a repeating directory
         return True
     if re.match(r"^.*calendar.*$", parsedUrl.path.lower()):# calendar pages
         return True
-    if re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme|/pdf).*$", parsedUrl.path.lower()): # extra directories
+    if re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme|/pdf|/irus|/tags).*$", parsedUrl.path.lower()): # extra directories
         return True
     if "?" in str(url):
         query = str(url).split("?")
+        if "&share" in query[1] or query[1].startswith("share"):
+            return True
+        if "&ical" in query[1] or query[1].startswith("ical"):
+            return True
         if "/" in query[1] or len(query) > 2:
             return True
     if ".php" in str(url):
         query = str(url).split(".php")
-        if "/" in query[1]:
+        if "/" in query[1] or len(query) > 2:
             return True
     if str(url).count("//") > 1:
         return True
 
-    
-  
     for domain in crawler_trap_domains: # it will check for certain text within the url, such as login.php which is not valuable in terms of crawling
         if domain.lower() in parsedUrl.path.lower():
             return True
