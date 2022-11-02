@@ -31,7 +31,7 @@ def scraper(url, resp):
                 if distanceNum < DISTANCE_TOLERANCE: # check to see if the page given is similar with our previousHashes, if it is, it is NOT valid, otherwise it's valid
                     valid = False
                     break
-            if flag:
+            if valid:
                 data.hashes.append(pageSimHash)
             else:
                 return []
