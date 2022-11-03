@@ -170,7 +170,7 @@ def is_crawler_trap(url, parsedUrl) -> bool:
         return True
     if re.match(r"^.*calendar.*$", parsedUrl.path.lower()):# calendar pages
         return True
-    if re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme|/pdf|/irus|/tags).*$", parsedUrl.path.lower()): # extra directories
+    if re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme|/pdf|/irus|/tags|/pub).*$", parsedUrl.path.lower()): # extra directories
         return True
     if "?" in str(url):
         query = str(url).split("?")
