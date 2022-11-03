@@ -9,7 +9,7 @@ from simhash import Simhash
 # We will crawl any pages with more than 300 tokens of text. 
 # Text will only be considered if it is inside of a <p> tag or any <h> tag.
 
-DISTANCE_TOLERANCE = 6
+DISTANCE_TOLERANCE = 4
 
 def valid_distance(currentPageSimhash, simhashList):
     for hash in simhashList: #check if this page is similar with the 10 previously crawled pages
