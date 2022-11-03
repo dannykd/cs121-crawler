@@ -137,9 +137,12 @@ def is_valid(url):
 
 def extractTokens(resp):
 
+    if not resp:
+        return []
     if not resp.raw_response:
-        if not resp.raw_response.content:
-            return []
+        return []
+    if not resp.raw_response.content:
+        return []
     textContent = ""
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
     for bodyTag in soup.find_all('body'):
